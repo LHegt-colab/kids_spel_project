@@ -71,6 +71,18 @@ function App() {
           path="/game/read-quiz"
           element={session ? <LeesKies /> : <Navigate to="/auth" />}
         />
+        <Route
+          path="/game/mysterie-missie"
+          element={session ? <MysterieMissie /> : <Navigate to="/auth" />}
+        />
+        <Route
+          path="/game/shop-game"
+          element={session ? <RuimteWinkel /> : <Navigate to="/auth" />}
+        />
+        <Route
+          path="/shop"
+          element={session ? <ShopPage /> : <Navigate to="/auth" />}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

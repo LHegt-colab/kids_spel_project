@@ -6,7 +6,6 @@ import { GameLayout } from '../../components/game/GameLayout'
 import { useGameSounds } from '../../hooks/useGameSounds'
 import { useGameSession } from '../../hooks/useGameSession'
 import { Heart, Keyboard } from 'lucide-react'
-import confetti from 'canvas-confetti'
 
 interface Word {
     id: string
@@ -32,8 +31,8 @@ export const Woordenjacht = () => {
     const [input, setInput] = useState('')
 
     // Refs for loop
-    const requestRef = useRef<number>()
-    const lastTimeRef = useRef<number>()
+    const requestRef = useRef<number | null>(null)
+    const lastTimeRef = useRef<number | null>(null)
     const spawnTimerRef = useRef(0)
 
     useEffect(() => {
@@ -73,57 +72,11 @@ export const Woordenjacht = () => {
     }
 
     // Game Loop
-    const animate = (time: number) => {
-        if (lastTimeRef.current === undefined) lastTimeRef.current = time
-        const deltaTime = time - lastTimeRef.current
-        lastTimeRef.current = time
-
-        if (gameState === 'playing') {
-            updateGame(deltaTime)
-        }
-        requestRef.current = requestAnimationFrame(animate)
-    }
-
-    useEffect(() => {
-        requestRef.current = requestAnimationFrame(animate)
-        return () => {
-            if (requestRef.current) cancelAnimationFrame(requestRef.current)
-        }
-    }, [gameState, availableWords]) // Re-bind if these change, though refs are better
-
-    const updateGame = (delta: number) => {
-        // Spawn
-        spawnTimerRef.current += delta
-        if (spawnTimerRef.current > 2000) { // Every 2 seconds
-            spawnWord()
-            spawnTimerRef.current = 0
-        }
-
-        // Move Words
-        setActiveWords(prev => {
-            const next = prev.map(w => ({
-                ...w,
-                y: w.y + (w.speed * delta * 0.01) // Speed factor
-            }))
-
-            // Check collisions (bottom)
-            const missed = next.filter(w => w.y > 90)
-            if (missed.length > 0) {
-                // Determine lives lost
-                // This state update inside loop is tricky due to closure staleness if not careful.
-                // We use functional update in `setLives` downstream or check here?
-                // Actually, `setActiveWords` functional update won't let us trigger side effect easily.
-                // Better: separate the filter.
-            }
-            return next.filter(w => w.y <= 90)
-        })
-
-        // This logic is slightly flawed for React state inside RAF.
-        // Better: distinct logic for "heartbeat" vs "render spawn".
-        // For V1 simple prototype with React State:
-        // We will move the logic to a `useEffect` interval for simpler state management than RAF 
-        // because RAF + React State often causes tearing or closure issues without refs.
-    }
+    // RAF Loop Removed in favor of Interval (Simpler for React State)
+    /*
+    const animate = (time: number) => { ... }
+    const updateGame = (delta: number) => { ... }
+    */
 
     // --- ALTERNATIVE: Interval Based Loop (Simpler for React) ---
     useEffect(() => {

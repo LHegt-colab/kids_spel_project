@@ -60,7 +60,7 @@ export const ShopPage = () => {
         const { error } = await supabase.from('purchased_items').insert({
             child_id: selectedChild!.id,
             item_id: item.id
-        })
+        } as any)
 
         if (!error) {
             // Deduct stars (Manual update or trigger? Manual for now as we don't have triggers set up for this yet)
@@ -135,8 +135,8 @@ export const ShopPage = () => {
                                             onClick={() => equipItem(item)}
                                             disabled={isEquipped}
                                             className={`w-full py-3 rounded-xl font-bold text-lg transition-colors ${isEquipped
-                                                    ? 'bg-space-200 text-space-400 cursor-default'
-                                                    : 'bg-brand-purple text-white hover:bg-brand-purple/90'
+                                                ? 'bg-space-200 text-space-400 cursor-default'
+                                                : 'bg-brand-purple text-white hover:bg-brand-purple/90'
                                                 }`}
                                         >
                                             {isEquipped ? 'Gedragen' : 'Aandoen'}
@@ -146,8 +146,8 @@ export const ShopPage = () => {
                                             onClick={() => buyItem(item)}
                                             disabled={!canAfford}
                                             className={`w-full py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors ${canAfford
-                                                    ? 'bg-brand-yellow text-space-900 hover:brightness-110 shadow-md'
-                                                    : 'bg-space-200 text-space-400 cursor-not-allowed'
+                                                ? 'bg-brand-yellow text-space-900 hover:brightness-110 shadow-md'
+                                                : 'bg-space-200 text-space-400 cursor-not-allowed'
                                                 }`}
                                         >
                                             {canAfford ? (

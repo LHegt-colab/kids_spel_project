@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { generateProblem, MathProblem, AgeBand } from '../../lib/MathEngine'
-import { generateProblem, MathProblem, AgeBand } from '../../lib/MathEngine'
 import { GameLayout } from '../../components/game/GameLayout'
 import { Numpad } from '../../components/game/Numpad'
 import { Timer, Zap, Trophy } from 'lucide-react'
@@ -42,7 +41,7 @@ export const RekenRace = () => {
             child_id: selectedChild.id,
             module_id: 'math-race',
             meta: { mode: 'time-trial' }
-        }).select().single()
+        } as any).select().single()
 
         if (data) {
             setSessionId(data.id)

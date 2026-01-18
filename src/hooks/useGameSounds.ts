@@ -14,7 +14,6 @@ export const useGameSounds = () => {
     // Since we don't have assets, we will just log playing for now, 
     // or we could use the Web Audio API to beep.
 
-    const { session } = useSession() // We can use session to check settings, or a new SettingsContext
     const { selectedChild } = useAuth() // Or check profile settings directly
     const [enabled, setEnabled] = useState(true)
 
@@ -28,7 +27,7 @@ export const useGameSounds = () => {
         if (selectedChild) {
             supabase.from('child_settings').select('sound_enabled').eq('child_id', selectedChild.id).single()
                 .then(({ data }) => {
-                    if (data) setEnabled(data.sound_enabled)
+                    if (data) setEnabled((data as any).sound_enabled)
                 })
         }
     }, [selectedChild])

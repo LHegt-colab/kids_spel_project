@@ -3,7 +3,7 @@ import { Layout } from '../components/layout/Layout'
 import { useAuth } from '../context/AuthContext'
 import { useGamification } from '../context/GamificationContext'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calculator, BookOpen, Search, Flag, Clock, Puzzle, Star, Zap, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, Calculator, BookOpen, Search, Puzzle, Star, Zap, ShoppingBag } from 'lucide-react'
 
 const MODULES = [
     { id: 'math-adventure', title: 'RekenAvontuur', icon: Calculator, color: 'bg-blue-500' },

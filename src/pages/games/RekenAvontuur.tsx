@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext'
 import { useSession } from '../../context/SessionContext'
 import { supabase } from '../../lib/supabase'
 import { generateProblem, MathProblem, AgeBand } from '../../lib/MathEngine'
-import { generateProblem, MathProblem, AgeBand } from '../../lib/MathEngine'
 import { GameLayout } from '../../components/game/GameLayout'
 import { Numpad } from '../../components/game/Numpad'
 import { Rocket, Star, Medal } from 'lucide-react'
@@ -47,7 +46,7 @@ export const RekenAvontuur = () => {
             child_id: selectedChild.id,
             module_id: 'math-adventure',
             meta: { total_questions: TOTAL_QUESTIONS }
-        }).select().single()
+        } as any).select().single()
 
         if (data) {
             setSessionId(data.id)

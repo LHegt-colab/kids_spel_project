@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { X, Save, Clock, Gamepad2, Volume2, Trophy, FileText, AlertCircle } from 'lucide-react'
+import { Save, Clock, Gamepad2, Volume2, FileText } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { ProgressReport } from './ProgressReport'
-import { ContentManager } from './ContentManager'
 
 // Constants for modules (could be imported from a config file)
 const MODULES = [

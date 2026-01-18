@@ -154,6 +154,110 @@ export interface Database {
                     meta?: any
                 }
             }
+            shop_items: {
+                Row: {
+                    id: string
+                    name: string
+                    description: string | null
+                    category: 'helmet' | 'suit' | 'pet' | 'background'
+                    cost: number
+                    asset_url: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    description?: string | null
+                    category: 'helmet' | 'suit' | 'pet' | 'background'
+                    cost?: number
+                    asset_url: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    description?: string | null
+                    category?: 'helmet' | 'suit' | 'pet' | 'background'
+                    cost?: number
+                    asset_url?: string
+                    created_at?: string
+                }
+            }
+            purchased_items: {
+                Row: {
+                    id: string
+                    child_id: string
+                    item_id: string
+                    purchased_at: string
+                }
+                Insert: {
+                    id?: string
+                    child_id: string
+                    item_id: string
+                    purchased_at?: string
+                }
+                Update: {
+                    id?: string
+                    child_id?: string
+                    item_id?: string
+                    purchased_at?: string
+                }
+            }
+            daily_challenges: {
+                Row: {
+                    id: string
+                    child_id: string
+                    challenge_date: string
+                    math_completed: boolean
+                    language_completed: boolean
+                    logic_completed: boolean
+                    rewards_claimed: boolean
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    child_id: string
+                    challenge_date: string
+                    math_completed?: boolean
+                    language_completed?: boolean
+                    logic_completed?: boolean
+                    rewards_claimed?: boolean
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    child_id?: string
+                    challenge_date?: string
+                    math_completed?: boolean
+                    language_completed?: boolean
+                    logic_completed?: boolean
+                    rewards_claimed?: boolean
+                    created_at?: string
+                }
+            }
+            library_words: {
+                Row: {
+                    id: string
+                    word: string
+                    category: string
+                    difficulty_level: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    word: string
+                    category: string
+                    difficulty_level: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    word?: string
+                    category?: string
+                    difficulty_level?: string
+                    created_at?: string
+                }
+            }
         }
     }
 }
