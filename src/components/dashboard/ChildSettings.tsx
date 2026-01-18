@@ -131,7 +131,7 @@ export const ChildSettings: React.FC<ChildSettingsProps> = ({ childId, childName
                 {/* Modules */}
                 <section>
                     <div className="flex items-center gap-3 mb-4">
-                        <Shield className="text-brand-orange" />
+                        <Gamepad2 className="text-brand-orange" />
                         <h4 className="text-lg font-bold text-white">Beschikbare Spellen</h4>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -170,7 +170,7 @@ export const ChildSettings: React.FC<ChildSettingsProps> = ({ childId, childName
 
                     <div>
                         <div className="flex items-center gap-3 mb-4">
-                            <BarChart className="text-blue-400" />
+                            <FileText className="text-blue-400" />
                             <h4 className="text-lg font-bold text-white">Rapportage</h4>
                         </div>
                         <select

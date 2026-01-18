@@ -4,12 +4,15 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './context/AuthContext'
 import { SessionProvider } from './context/SessionContext'
+import { GamificationProvider } from './context/GamificationContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <SessionProvider>
-        <App />
+        <GamificationProvider>
+          <App />
+        </GamificationProvider>
       </SessionProvider>
     </AuthProvider>
   </StrictMode>,
