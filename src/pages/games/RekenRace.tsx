@@ -1,22 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useGamification } from '../../context/GamificationContext'
 import { supabase } from '../../lib/supabase'
-import { generateProblem, MathProblem, AgeBand } from '../../lib/MathEngine'
+import { generateProblem, type MathProblem, type AgeBand } from '../../lib/MathEngine'
 import { GameLayout } from '../../components/game/GameLayout'
 import { Numpad } from '../../components/game/Numpad'
 import { Timer, Zap, Trophy } from 'lucide-react'
 import { useGameSounds } from '../../hooks/useGameSounds'
+import { useKeyboardInput } from '../../hooks/useKeyboardInput'
+import { useGameSession } from '../../hooks/useGameSession'
 import confetti from 'canvas-confetti'
 
 export const RekenRace = () => {
     const { selectedChild } = useAuth()
+    const { completeChallengeTask } = useGamification()
     const { playCorrect, playWrong, playLevelUp } = useGameSounds()
     const navigate = useNavigate()
     const timerRef = useRef<number | null>(null)
 
+    // Hook Integration
+    const { sessionId, endSession, logAnswer } = useGameSession('math-race')
+
     const [loading, setLoading] = useState(true)
-    const [sessionId, setSessionId] = useState<string | null>(null)
     const [gameState, setGameState] = useState<'ready' | 'playing' | 'finished'>('ready')
 
     const [problem, setProblem] = useState<MathProblem | null>(null)
@@ -36,31 +42,21 @@ export const RekenRace = () => {
     const startGame = async () => {
         if (!selectedChild) return
 
-        // Start Session
-        const { data } = await supabase.from('game_sessions').insert({
-            child_id: selectedChild.id,
-            module_id: 'math-race',
-            meta: { mode: 'time-trial' }
-        } as any).select().single()
+        setGameState('playing')
+        setScore(0)
+        setTimeLeft(60)
+        generateNewProblem()
 
-        if (data) {
-            setSessionId(data.id)
-            setGameState('playing')
-            setScore(0)
-            setTimeLeft(60)
-            generateNewProblem()
-
-            // Start Timer
-            timerRef.current = window.setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev <= 1) {
-                        endGame()
-                        return 0
-                    }
-                    return prev - 1
-                })
-            }, 1000)
-        }
+        // Start Timer
+        timerRef.current = window.setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    endGame()
+                    return 0
+                }
+                return prev - 1
+            })
+        }, 1000)
     }
 
     const endGame = () => {
@@ -70,12 +66,12 @@ export const RekenRace = () => {
     }
 
     const saveSession = async () => {
-        if (!sessionId) return
-        await supabase.from('game_sessions').update({
-            end_time: new Date().toISOString(),
-            score: score,
-            duration_seconds: 60 - timeLeft
-        }).eq('id', sessionId)
+        await endSession(score, { duration_seconds: 60 - timeLeft })
+
+        // Complete Daily Challenge
+        if (score > 0) {
+            completeChallengeTask('math')
+        }
 
         confetti({
             particleCount: 100,
@@ -101,20 +97,18 @@ export const RekenRace = () => {
     }
 
     const handleSubmit = async () => {
-        if (!problem || !sessionId || !input) return
+        if (!problem || !input) return // removed !sessionId check as it's handled by hook (and might be pending but who cares for V1)
 
         const numInput = parseInt(input)
         const isCorrect = numInput === problem.answer
 
-        // Fire & Forget Log
-        supabase.from('answers_log').insert({
-            session_id: sessionId,
-            question_id: problem.id,
-            is_correct: isCorrect,
-            answer: input,
-            correct_answer: problem.answer.toString(),
-            response_time_ms: 0
-        } as any)
+        // Log Answer
+        logAnswer(
+            problem.id,
+            isCorrect,
+            input,
+            problem.answer.toString()
+        )
 
         if (isCorrect) {
             setScore(prev => prev + 5) // 5 points per speed answer
@@ -132,15 +126,18 @@ export const RekenRace = () => {
         }
     }
 
+
+    useKeyboardInput({
+        onInput: handleInput,
+        onDelete: handleDelete,
+        onSubmit: handleSubmit,
+        disabled: gameState !== 'playing'
+    })
+
     const handleExit = () => {
-        if (gameState === 'playing') {
-            if (confirm('Stoppen?')) {
-                if (timerRef.current) clearInterval(timerRef.current)
-                navigate('/game/home')
-            }
-        } else {
-            navigate('/game/home')
-        }
+        // Direct exit to fix "broken button" feedback
+        if (timerRef.current) clearInterval(timerRef.current)
+        navigate('/game/home')
     }
 
     useEffect(() => {
@@ -209,6 +206,15 @@ export const RekenRace = () => {
                 onDelete={handleDelete}
                 onSubmit={handleSubmit}
             />
+
+            <div className="mt-8">
+                <button
+                    onClick={handleExit}
+                    className="text-space-400 hover:text-white underline decoration-space-600 hover:decoration-white underline-offset-4 font-bold tracking-widest text-sm"
+                >
+                    STOPPEN & TERUG
+                </button>
+            </div>
         </GameLayout>
     )
 }

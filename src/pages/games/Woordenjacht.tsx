@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useGamification } from '../../context/GamificationContext'
 import { supabase } from '../../lib/supabase'
 import { GameLayout } from '../../components/game/GameLayout'
 import { useGameSounds } from '../../hooks/useGameSounds'
@@ -17,18 +18,20 @@ interface Word {
 
 export const Woordenjacht = () => {
     const { selectedChild } = useAuth()
+    const { completeChallengeTask } = useGamification()
     const navigate = useNavigate()
     const { playCorrect, playWrong } = useGameSounds()
     const { sessionId, endSession, logAnswer } = useGameSession('word-hunt')
     const canvasRef = useRef<HTMLDivElement>(null)
 
     const [loading, setLoading] = useState(true)
-    const [gameState, setGameState] = useState<'playing' | 'gameover'>('playing')
+    const [gameState, setGameState] = useState<'ready' | 'playing' | 'gameover'>('ready')
     const [score, setScore] = useState(0)
     const [lives, setLives] = useState(3)
     const [activeWords, setActiveWords] = useState<Word[]>([])
     const [availableWords, setAvailableWords] = useState<string[]>([])
     const [input, setInput] = useState('')
+    const [speedMultiplier, setSpeedMultiplier] = useState(1) // 0.5 = Slow, 1 = Normal, 1.5 = Fast
 
     // Refs for loop
     const requestRef = useRef<number | null>(null)
@@ -44,21 +47,10 @@ export const Woordenjacht = () => {
     }, [selectedChild])
 
     const fetchWords = async () => {
-        // Fetch customized words for parent profile (assuming child is linked to parent profile implicitly via auth context parent)
-        // Actually, we don't have parent_id easily on selectedChild without a join.
-        // But for V1 we used `selectedChild.parent_id` (wait, check schema).
-        // `child_profiles` has `parent_id`. 
-
         if (!selectedChild) return
-
-        // 1. Get Parent ID
-        // The authenticated user is the parent. `selectedChild` is just a state.
-        // Correct.
-
+        // Fetch customized words for parent profile
         const { data } = await supabase
             .from('library_words')
-            //.eq('profile_id', user.id) // We need to access parent user id.
-            // Actually, querying across RLS might receive only own words if logged in.
             .select('word')
             .limit(50)
 
@@ -71,20 +63,18 @@ export const Woordenjacht = () => {
         setLoading(false)
     }
 
-    // Game Loop
-    // RAF Loop Removed in favor of Interval (Simpler for React State)
-    /*
-    const animate = (time: number) => { ... }
-    const updateGame = (delta: number) => { ... }
-    */
-
-    // --- ALTERNATIVE: Interval Based Loop (Simpler for React) ---
+    // --- GAME LOOP ---
     useEffect(() => {
         if (gameState !== 'playing' || loading) return
 
         const interval = setInterval(() => {
             setActiveWords(prev => {
-                const nextWords = prev.map(w => ({ ...w, y: w.y + 1.5 })) // Move down 1.5% tick
+                // Move down based on speed
+                // Base speed is 1.5% per tick? Let's scale it.
+                // Slow: 0.5, Normal: 1.0, Fast: 1.5
+                const moveAmount = 0.5 * speedMultiplier
+
+                const nextWords = prev.map(w => ({ ...w, y: w.y + moveAmount }))
 
                 const missed = nextWords.filter(w => w.y > 85)
                 const kept = nextWords.filter(w => w.y <= 85)
@@ -108,18 +98,18 @@ export const Woordenjacht = () => {
             const newWord: Word = {
                 id: Math.random().toString(),
                 text: randomWord,
-                x: Math.random() * 80 + 10, // 10-90%
+                x: Math.random() * 80 + 10,
                 y: 0,
                 speed: 1
             }
             setActiveWords(prev => [...prev, newWord])
-        }, 3000) // Spawn every 3s
+        }, 3000 / speedMultiplier) // Spawn faster if speed is higher? Or keep constant? Maybe scale slightly.
 
         return () => {
             clearInterval(interval)
             clearInterval(spawner)
         }
-    }, [gameState, loading, availableWords])
+    }, [gameState, loading, availableWords, speedMultiplier])
 
 
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,6 +132,10 @@ export const Woordenjacht = () => {
     useEffect(() => {
         if (gameState === 'gameover') {
             endSession(score, { lives_left: lives })
+
+            if (score > 0) {
+                completeChallengeTask('language')
+            }
         }
     }, [gameState])
 
@@ -151,6 +145,32 @@ export const Woordenjacht = () => {
     }
 
     if (loading) return <div className="text-white text-center mt-20">Laden...</div>
+
+    if (gameState === 'ready') {
+        return (
+            <GameLayout title="Woordenjacht" score={0} onExit={() => navigate('/game/home')}>
+                <div className="text-center animate-in zoom-in max-w-lg mx-auto">
+                    <h1 className="text-4xl font-display font-bold text-white mb-6">Kies je Snelheid</h1>
+
+                    <div className="grid grid-cols-1 gap-4 mb-8">
+                        <button onClick={() => { setSpeedMultiplier(0.5); setGameState('playing') }} className="bg-green-500 hover:bg-green-400 text-white p-6 rounded-2xl text-2xl font-bold shadow-lg transition-transform hover:scale-105">
+                            Langzaam 🐢
+                        </button>
+                        <button onClick={() => { setSpeedMultiplier(1); setGameState('playing') }} className="bg-blue-500 hover:bg-blue-400 text-white p-6 rounded-2xl text-2xl font-bold shadow-lg transition-transform hover:scale-105">
+                            Normaal 🐇
+                        </button>
+                        <button onClick={() => { setSpeedMultiplier(1.5); setGameState('playing') }} className="bg-red-500 hover:bg-red-400 text-white p-6 rounded-2xl text-2xl font-bold shadow-lg transition-transform hover:scale-105">
+                            Snel 🚀
+                        </button>
+                    </div>
+
+                    <button onClick={() => navigate('/game/home')} className="text-space-300 hover:text-white underline">
+                        Terug
+                    </button>
+                </div>
+            </GameLayout>
+        )
+    }
 
     if (gameState === 'gameover') {
         return (
@@ -163,7 +183,7 @@ export const Woordenjacht = () => {
                             setLives(3)
                             setScore(0)
                             setActiveWords([])
-                            setGameState('playing')
+                            setGameState('ready')
                         }}
                         className="bg-brand-teal text-space-900 font-bold px-8 py-3 rounded-xl"
                     >

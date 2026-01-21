@@ -3,21 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useSession } from '../../context/SessionContext'
 import { supabase } from '../../lib/supabase'
-import { generateProblem, MathProblem, AgeBand } from '../../lib/MathEngine'
+import { generateProblem, type MathProblem, type AgeBand } from '../../lib/MathEngine'
 import { GameLayout } from '../../components/game/GameLayout'
 import { Numpad } from '../../components/game/Numpad'
 import { Rocket, Star, Medal } from 'lucide-react'
 import { useGameSounds } from '../../hooks/useGameSounds'
 import confetti from 'canvas-confetti'
 
+import { useGameSession } from '../../hooks/useGameSession'
+import { useKeyboardInput } from '../../hooks/useKeyboardInput'
+
 export const RekenAvontuur = () => {
     const { selectedChild } = useAuth()
-    const { unlockTemporary } = useSession() // We might need this for something later
+    const { unlockTemporary } = useSession()
     const { playCorrect, playWrong, playLevelUp } = useGameSounds()
     const navigate = useNavigate()
 
+    // Hook Integration
+    const { sessionId, endSession, logAnswer } = useGameSession('math-adventure')
+
     const [loading, setLoading] = useState(true)
-    const [sessionId, setSessionId] = useState<string | null>(null)
     const [gameState, setGameState] = useState<'playing' | 'feedback' | 'finished'>('playing')
 
     // Question State
@@ -30,34 +35,23 @@ export const RekenAvontuur = () => {
     // Constants
     const TOTAL_QUESTIONS = 10
 
+    // Keyboard Hook
+    useKeyboardInput({
+        onInput: (val) => { if (input.length < 4) setInput(prev => prev + val) },
+        onDelete: () => setInput(prev => prev.slice(0, -1)),
+        onSubmit: () => handleSubmit(),
+        disabled: gameState === 'feedback' || gameState === 'finished'
+    })
+
     useEffect(() => {
         if (!selectedChild) {
             navigate('/child/select')
             return
         }
-        startSession()
+        // Initialize Game
+        generateNewProblem()
+        setLoading(false)
     }, [selectedChild])
-
-    const startSession = async () => {
-        if (!selectedChild) return
-
-        // Create Session in DB
-        const { data, error } = await supabase.from('game_sessions').insert({
-            child_id: selectedChild.id,
-            module_id: 'math-adventure',
-            meta: { total_questions: TOTAL_QUESTIONS }
-        } as any).select().single()
-
-        if (data) {
-            setSessionId(data.id)
-            generateNewProblem()
-            setLoading(false)
-        } else {
-            console.error('Failed to start session', error)
-            alert('Kan spel niet starten...')
-            navigate('/')
-        }
-    }
 
     const generateNewProblem = () => {
         if (!selectedChild) return
@@ -83,16 +77,12 @@ export const RekenAvontuur = () => {
         const isCorrect = numInput === problem.answer
 
         // Log Answer
-        const startTime = Date.now() // Ideally we capture start time of question, simplifying for now
-
-        await supabase.from('answers_log').insert({
-            session_id: sessionId,
-            question_id: problem.id,
-            is_correct: isCorrect,
-            answer: input,
-            correct_answer: problem.answer.toString(),
-            response_time_ms: 0 // TODO: Track time per question
-        })
+        logAnswer(
+            problem.id,
+            isCorrect,
+            input,
+            problem.answer.toString()
+        )
 
         // Feedback
         setFeedback(isCorrect ? 'correct' : 'wrong')
@@ -123,14 +113,9 @@ export const RekenAvontuur = () => {
 
     const finishGame = async () => {
         setGameState('finished')
-        if (!sessionId) return
 
-        // Update Session
-        await supabase.from('game_sessions').update({
-            end_time: new Date().toISOString(),
-            score: score,
-            duration_seconds: 0 // Calculate if needed or use DB timestamps
-        }).eq('id', sessionId)
+        // Update Session via Hook (auto-calculates stars)
+        await endSession(score)
 
         // Final celebration
         confetti({
@@ -141,9 +126,7 @@ export const RekenAvontuur = () => {
     }
 
     const handleExit = () => {
-        if (confirm('Wil je stoppen? Je voortgang gaat verloren.')) {
-            navigate('/game/home')
-        }
+        navigate('/game/home')
     }
 
     if (loading) return <div className="bg-space-900 min-h-screen text-white flex items-center justify-center">Laden...</div>
@@ -202,6 +185,16 @@ export const RekenAvontuur = () => {
                 onSubmit={handleSubmit}
                 disabled={gameState === 'feedback'}
             />
+
+            {/* Explicit Stop Button */}
+            <div className="mt-6">
+                <button
+                    onClick={handleExit}
+                    className="text-space-400 hover:text-white underline decoration-space-600 hover:decoration-white underline-offset-4 font-bold tracking-widest text-sm"
+                >
+                    STOPPEN & TERUG
+                </button>
+            </div>
 
             {/* Progress Rocket */}
             <div className="fixed bottom-0 left-0 w-full h-4 bg-space-800">

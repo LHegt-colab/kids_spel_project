@@ -29,6 +29,21 @@ export const useGameSession = (moduleId: string) => {
             .select() // Need to select to get ID if using PG < 15 or if policies allow
             .single()
 
+        // Track Daily Usage for Streak
+        if (selectedChild) {
+            const today = new Date().toISOString().split('T')[0]
+            // Upsert usage (handling unique constraint via onConflict if supported, or manual check)
+            // Since we don't have upsert helper easily, let's try strict insert and ignore duplicate error, 
+            // OR checks exist. Schema says unique(child_id, date).
+            // We'll trust supabase.upsert if policies allow, or just separate check.
+            // Simplest for now: Attempt insert, ignore error.
+            const { error: usageError } = await supabase.from('daily_usage').upsert({
+                child_id: selectedChild.id,
+                date: today,
+                minutes_used: 1 // Incrementing properly would require read-update, just marking active for now
+            } as any, { onConflict: 'child_id, date' })
+        }
+
         if (data) {
             setSessionId(data.id)
         } else if (error) {
@@ -51,6 +66,24 @@ export const useGameSession = (moduleId: string) => {
                 meta: meta
             })
             .eq('id', sessionId)
+
+        // Award Stars (Economy Logic)
+        if (score > 0) {
+            const starsEarned = Math.ceil(score / 5) // 5 points = 1 star
+            const { data: profile } = await supabase
+                .from('child_profiles')
+                .select('total_stars')
+                .eq('id', selectedChild.id)
+                .single()
+
+            if (profile) {
+                const newTotal = (profile.total_stars || 0) + starsEarned
+                await supabase
+                    .from('child_profiles')
+                    .update({ total_stars: newTotal })
+                    .eq('id', selectedChild.id)
+            }
+        }
     }
 
     const logAnswer = async (

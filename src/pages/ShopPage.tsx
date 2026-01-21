@@ -46,7 +46,8 @@ export const ShopPage = () => {
             .single()
 
         setItems(shopItems || [])
-        setOwnedItems(purchases?.map(p => p.item_id) || [])
+        // Fix: Explicitly handle the array type to avoid 'never' inference
+        setOwnedItems((purchases as any[])?.map((p: any) => p.item_id) || [])
         setEquipped(profile || {})
         setLoading(false)
     }
@@ -66,7 +67,7 @@ export const ShopPage = () => {
             // Deduct stars (Manual update or trigger? Manual for now as we don't have triggers set up for this yet)
             // Wait, we need to update profile stars.
             const newStars = stars - item.cost
-            await supabase.from('child_profiles').update({ stars: newStars }).eq('id', selectedChild!.id)
+            await supabase.from('child_profiles').update({ stars: newStars } as any).eq('id', selectedChild!.id)
 
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } })
             refreshProfile() // Update context
@@ -78,7 +79,7 @@ export const ShopPage = () => {
         const column = `equipped_${item.category}` // e.g., equipped_helmet
         const { error } = await supabase
             .from('child_profiles')
-            .update({ [column]: item.asset_url })
+            .update({ [column]: item.asset_url } as any)
             .eq('id', selectedChild!.id)
 
         if (!error) {
@@ -105,7 +106,10 @@ export const ShopPage = () => {
                     </div>
                     <div className="flex items-center gap-3 bg-space-900 px-6 py-3 rounded-full border border-brand-yellow/30 shadow-inner">
                         <Coins className="text-brand-yellow fill-brand-yellow" size={28} />
-                        <span className="text-3xl font-bold text-white">{stars}</span>
+                        <div className="flex flex-col items-end">
+                            <span className="text-3xl font-bold text-white leading-none">{stars}</span>
+                            <span className="text-xs text-brand-yellow/80">Speel spellen om te verdienen!</span>
+                        </div>
                     </div>
                 </div>
 

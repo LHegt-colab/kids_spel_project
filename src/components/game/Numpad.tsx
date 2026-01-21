@@ -28,7 +28,7 @@ export const Numpad: React.FC<NumpadProps> = ({ onInput, onDelete, onSubmit, dis
             <button
                 onClick={onDelete}
                 disabled={disabled}
-                className="aspect-square bg-red-500/20 text-red-400 rounded-2xl border-b-4 border-red-900/50 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center disabled:opacity-50"
+                className="aspect-square bg-red-500 hover:bg-red-400 text-white rounded-2xl border-b-4 border-red-700 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center disabled:opacity-50 shadow-lg"
             >
                 <Delete size={32} />
             </button>

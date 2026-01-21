@@ -29,12 +29,13 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
     return (
         <div className="min-h-screen bg-space-900 bg-stars flex flex-col">
             {/* Header */}
-            <header className="p-4 flex justify-between items-center max-w-5xl mx-auto w-full">
+            <header className="p-4 flex justify-between items-center max-w-5xl mx-auto w-full sticky top-0 z-50 bg-space-900/80 backdrop-blur-sm border-b border-white/5">
                 <button
                     onClick={onExit}
-                    className="bg-space-800 p-2 rounded-xl text-space-300 hover:text-white hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                    className="flex items-center gap-2 bg-space-800 px-4 py-2 rounded-xl text-space-300 hover:text-white hover:bg-red-500/20 hover:text-red-400 transition-colors group"
                 >
-                    <X size={32} />
+                    <X size={24} className="group-hover:scale-110 transition-transform" />
+                    <span className="font-bold text-sm tracking-widest">STOP</span>
                 </button>
 
                 <div className="flex items-center gap-6">

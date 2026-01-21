@@ -213,6 +213,12 @@ export const Zinnenbouwer = () => {
                     )}
                 </div>
 
+                <div className="text-center mt-4">
+                    <button onClick={() => navigate('/game/home')} className="text-space-400 hover:text-white underline font-bold tracking-widest text-sm">
+                        STOPPEN & TERUG
+                    </button>
+                </div>
+
                 {/* Word Bank */}
                 <div className="bg-space-800/50 p-6 rounded-2xl flex flex-wrap gap-4 justify-center border border-space-700 min-h-[150px]">
                     {scrambledWords.map((word) => (

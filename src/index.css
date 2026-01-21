@@ -1,6 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-space-900: #0b0d17;
+  --color-space-800: #151932;
+  --color-space-700: #1f2544;
+  --color-space-600: #2a3158;
+  --color-space-500: #3e497a;
+  --color-space-400: #55629b;
+  --color-space-300: #717ebd;
+  --color-space-200: #919bcf;
+  --color-space-100: #b4bce0;
+  --color-space-50: #dbe0f2;
+
+  --color-brand-yellow: #FFD700;
+  --color-brand-orange: #FF8C00;
+  --color-brand-teal: #00CED1;
+  --color-brand-purple: #9333ea;
+
+  --font-display: "Outfit", sans-serif;
+}
 
 :root {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -9,7 +27,8 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #0b0d17; /* space-900 */
+  background-color: #0b0d17;
+  /* space-900 */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

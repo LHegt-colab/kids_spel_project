@@ -81,15 +81,24 @@ export const LeesKies = () => {
                 { id: 'q3', question: 'Is de maan van kaas?', options: ['Ja', 'Nee', 'Misschien'], correct_answer: 'Nee' }
             ]
         } else {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('library_questions')
                 .select('*')
                 .eq('text_id', text.id)
-            if (data) qs = data
+
+            if (error) {
+                alert("Fout bij laden vragen: " + error.message)
+                setLoading(false)
+                return
+            }
+
+            if (data) {
+                qs = data
+            }
         }
 
         if (qs.length === 0) {
-            alert("Dit verhaal heeft nog geen vragen!")
+            alert(`Dit verhaal (ID: ${text.id.substring(0, 4)}...) heeft nog geen vragen! Voeg ze toe via het Ouderpaneel.`)
             setLoading(false)
             return
         }
@@ -246,6 +255,12 @@ export const LeesKies = () => {
                                 </button>
                             </div>
                         )}
+
+                        <div className="mt-8 text-center">
+                            <button onClick={() => navigate('/game/home')} className="text-space-400 hover:text-white underline font-bold tracking-widest text-sm">
+                                STOPPEN & TERUG
+                            </button>
+                        </div>
                     </div>
                 </div>
 
